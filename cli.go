@@ -59,17 +59,17 @@ func (cli *Cli) Init() {
 func (cli *Cli) DumpRows() {
 	rows, err := cli.DB.Query("SELECT * FROM batteryinfo")
 	checkErr(err)
+
 	var id int
 	var charge_now int
 	var charge_full int
 	var charge_design int
-
 	var current_now int
 	var voltage_now int
-
+	var charging int
 	var timestamp int
 
-	fmt.Println("id|charge_now|charge_full|charge_design|current_now|voltage_now|timestamp")
+	fmt.Println("id|charge_now|charge_full|charge_design|current_now|voltage_now|charging|timestamp")
 	for rows.Next() {
 		err = rows.Scan(
 			&id,
@@ -78,17 +78,19 @@ func (cli *Cli) DumpRows() {
 			&charge_design,
 			&current_now,
 			&voltage_now,
+			&charging,
 			&timestamp)
 
 		checkErr(err)
 		fmt.Printf(
-			"%d|%d|%d|%d|%d|%d|%d\n",
+			"%d|%d|%d|%d|%d|%d|%d|%d\n",
 			id,
 			charge_now,
 			charge_full,
 			charge_design,
 			current_now,
 			voltage_now,
+			charging,
 			timestamp)
 	}
 
@@ -96,8 +98,15 @@ func (cli *Cli) DumpRows() {
 
 func (cli *Cli) Do() {
 	stmt, err := cli.DB.Prepare(`
-		INSERT INTO batteryinfo(charge_now, charge_full, charge_design, current_now, voltage_now, timestamp) 
-		values(?,?,?,?,?,?)`,
+		INSERT INTO batteryinfo(
+			charge_now, 
+			charge_full, 
+			charge_design, 
+			current_now, 
+			voltage_now, 
+			charging, 
+			timestamp) 
+		values(?,?,?,?,?,?,?)`,
 	)
 	checkErr(err)
 	var batInfo *BatteryDataRow
@@ -111,6 +120,7 @@ func (cli *Cli) Do() {
 		batInfo.ChargeFullDesign,
 		batInfo.CurrentNow,
 		batInfo.VoltageNow,
+		batInfo.Charging,
 		batInfo.Timestamp,
 	)
 	checkErr(err)

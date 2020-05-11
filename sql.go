@@ -14,6 +14,7 @@ const CreateTableStmt string = `
 	charge_design INTEGER NULL,
 	current_now INTEGER NULL,
 	voltage_now INTEGER NULL,
+	charging INTEGER NULL,
 	timestamp INTEGER NULL
     );`
 
@@ -24,6 +25,7 @@ type BatteryDataRow struct {
 	ChargeFullDesign int64
 	CurrentNow       int64
 	VoltageNow       int64
+	Charging         int64
 	Timestamp        int64
 }
 
