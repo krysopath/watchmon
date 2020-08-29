@@ -116,9 +116,9 @@ func (cli *Cli) Do() {
 	var batInfo *BatteryDataRow
 	batInfo = Measure(cli.BatteryDevice)
 
-	fmt.Printf("%+v", batInfo)
+	fmt.Printf("%s: %+v", *cli.BatteryDevice, batInfo)
 
-	res, err := stmt.Exec(
+	_, errSql := stmt.Exec(
 		batInfo.ChargeNow,
 		batInfo.ChargeFull,
 		batInfo.ChargeFullDesign,
@@ -127,8 +127,7 @@ func (cli *Cli) Do() {
 		batInfo.Charging,
 		batInfo.Timestamp,
 	)
-	checkErr(err)
-	fmt.Printf("%+v", res)
+	checkErr(errSql)
 }
 
 func main() {
