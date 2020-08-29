@@ -32,21 +32,21 @@ func ReadBatteryValueAsInt(path, battery, property string) int64 {
 	return asInt
 }
 
-func Measure() *BatteryDataRow {
+func Measure(batteryDevice *string) *BatteryDataRow {
 	var batteryPath string = "/sys/class/power_supply/%s/%s"
 	return &BatteryDataRow{
 		ChargeNow: ReadBatteryValueAsInt(
-			batteryPath, "BAT0", "charge_now"),
+			batteryPath, *batteryDevice, "charge_now"),
 		ChargeFull: ReadBatteryValueAsInt(
-			batteryPath, "BAT0", "charge_full"),
+			batteryPath, *batteryDevice, "charge_full"),
 		ChargeFullDesign: ReadBatteryValueAsInt(
-			batteryPath, "BAT0", "charge_full_design"),
+			batteryPath, *batteryDevice, "charge_full_design"),
 		CurrentNow: ReadBatteryValueAsInt(
-			batteryPath, "BAT0", "current_now"),
+			batteryPath, *batteryDevice, "current_now"),
 		VoltageNow: ReadBatteryValueAsInt(
-			batteryPath, "BAT0", "voltage_now"),
+			batteryPath, *batteryDevice, "voltage_now"),
 		Charging: IsBatteryCharging(
-			batteryPath, "BAT0", "status"),
+			batteryPath, *batteryDevice, "status"),
 		Timestamp: time.Now().Unix(),
 	}
 }

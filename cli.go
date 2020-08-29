@@ -23,6 +23,8 @@ var DBFileDefault = fmt.Sprintf(
 	User.HomeDir)
 
 func ParseFlags() *Cli {
+	batteryDevice := flag.String(
+		"bat", "BAT0", "specify battery device from '/sys/class/power_supply/BAT*'")
 	sqliteFile := flag.String(
 		"sqlite", DBFileDefault, "saving data to sqlite")
 	dbCreateToggle := flag.Bool(
@@ -32,6 +34,7 @@ func ParseFlags() *Cli {
 	flag.Parse()
 
 	return &Cli{
+		BatteryDevice:  batteryDevice,
 		SqliteFile:     sqliteFile,
 		CreateDBToggle: dbCreateToggle,
 		DumpRowsToggle: dumpRowsToggle,
@@ -40,6 +43,7 @@ func ParseFlags() *Cli {
 }
 
 type Cli struct {
+	BatteryDevice  *string
 	SqliteFile     *string
 	CreateDBToggle *bool
 	DumpRowsToggle *bool
@@ -110,7 +114,7 @@ func (cli *Cli) Do() {
 	)
 	checkErr(err)
 	var batInfo *BatteryDataRow
-	batInfo = Measure()
+	batInfo = Measure(cli.BatteryDevice)
 
 	fmt.Printf("%+v", batInfo)
 
