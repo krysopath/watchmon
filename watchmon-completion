@@ -1,0 +1,43 @@
+# watchmon completion                                      -*- shell-script -*-
+
+__get_battery_devices()
+{
+    find /sys/class/power_supply -name 'BAT*' | xargs basename
+   # ls /sys/class/power_supply/ | grep -o 'BAT[0-9]*'
+}
+
+_watchmon_completions()
+{
+    local cur prev OPTS
+    _init_completion || return
+
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    case $prev in
+        '-bat')
+            COMPREPLY=( $(compgen -W  "$(__get_battery_devices)" -- $cur) )
+            return 0
+            ;;
+        '-sqlite')
+            _filedir
+            return 0
+            ;;
+    esac
+
+    case $cur in
+        *)
+            OPTS="-bat
+            -dbcreate
+            -dump
+            -sqlite"
+
+            COMPREPLY=( $(compgen -W "${OPTS[*]}" -- $cur) )
+            return  0
+            ;;
+    esac
+
+    return 0
+}
+
+complete -o bashdefault -o nospace -F _watchmon_completions watchmon
