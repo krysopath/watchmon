@@ -3,7 +3,6 @@
 __get_battery_devices()
 {
     find /sys/class/power_supply -name 'BAT*' | xargs basename
-   # ls /sys/class/power_supply/ | grep -o 'BAT[0-9]*'
 }
 
 _watchmon_completions()

@@ -42,3 +42,12 @@ watchmon -dbcreate
 ```
 watchmon -dump
 ```
+
+
+## shells with benefits
+
+To enable `<TAB><TAB>` madness, run bash with `bash-completions` and source:
+
+``
+. watchmon-completion
+``
