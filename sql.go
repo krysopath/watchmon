@@ -58,6 +58,7 @@ CapacityDegration: %10d ‰
 	)
 }
 
+// CreateDatabaseAndTables
 func CreateDatabaseAndTables(db *sql.DB) {
 	_, err := db.Exec(CreateTableStmt)
 	checkErr(err)
