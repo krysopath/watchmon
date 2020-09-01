@@ -2,9 +2,11 @@ package main
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"os/user"
 )
 
@@ -16,11 +18,15 @@ func getUser() *user.User {
 	return usr
 }
 
-var User = getUser()
-
-var DBFileDefault = fmt.Sprintf(
-	"%s/watchmon.sqlite",
-	User.HomeDir)
+var (
+	User          = getUser()
+	DBFileDefault = fmt.Sprintf(
+		"%s/watchmon.sqlite",
+		User.HomeDir)
+	shellCompletion string
+	gitTag          string
+	gitRef          string
+)
 
 func ParseFlags() *Cli {
 	batteryDevice := flag.String(
@@ -100,7 +106,7 @@ func (cli *Cli) DumpRows() {
 
 }
 
-func (cli *Cli) Do() {
+func (cli *Cli) Measure() {
 	stmt, err := cli.DB.Prepare(`
 		INSERT INTO batteryinfo(
 			charge_now, 
@@ -130,15 +136,37 @@ func (cli *Cli) Do() {
 	checkErr(errSql)
 }
 
+func usage() {
+	fmt.Fprintf(
+		os.Stderr,
+		`watchmon %s-%s
+		supports measure, dump, completions sub commands`,
+		gitTag, gitRef,
+	)
+}
+
 func main() {
 	cli := ParseFlags()
 	cli.Init()
 	defer cli.DB.Close()
 
-	if *cli.DumpRowsToggle {
-		cli.DumpRows()
+	if len(os.Args) >= 2 {
+		switch os.Args[1] {
+		case "measure":
+			cli.Measure()
+		case "dump":
+			cli.DumpRows()
+		case "completions":
+			data, err := base64.StdEncoding.DecodeString(shellCompletion)
+			if err != nil {
+				panic("error: the shell completions script could not be decoded")
+			}
+			fmt.Fprintf(os.Stdout, "%s\n", data)
+		default:
+			usage()
+			os.Exit(1)
+		}
 	} else {
-		cli.Do()
+		usage()
 	}
-
 }
