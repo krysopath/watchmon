@@ -1,8 +1,11 @@
 GIT_SHA := $(shell git rev-parse --short HEAD 2>/dev/null)
 GIT_TAG := $(shell git describe --abbrev=0 HEAD 2>/dev/null)
-LD_FLAGS := '-s -w -X main.gitTag=$(GIT_TAG) -X main.gitRef=$(GIT_SHA) -X main.shellCompletion=$(shell base64 -w0 watchmon-completion)'
+LD_FLAGS := '-s -w \
+	-X main.gitTag=$(GIT_TAG) \
+	-X main.gitRef=$(GIT_SHA) \
+	-X main.shellCompletion=$(shell base64 -w0 watchmon-completion)'
 
-install: bin/watchmon
+$(GOPATH)/bin/watchmon: bin/watchmon
 	cp bin/watchmon $(GOPATH)/bin
 
 bin/watchmon: *.go deps.txt
@@ -15,4 +18,3 @@ bin/watchmon: *.go deps.txt
 deps.txt: go.mod go.sum
 	go get
 	go mod graph > deps.txt
-
