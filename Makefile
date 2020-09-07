@@ -5,9 +5,6 @@ LD_FLAGS := '-s -w \
 	-X main.gitRef=$(GIT_SHA) \
 	-X main.shellCompletion=$(shell base64 -w0 watchmon-completion)'
 
-$(GOPATH)/bin/watchmon: bin/watchmon
-	cp bin/watchmon $(GOPATH)/bin
-
 bin/watchmon: *.go deps.txt
 	go build \
 		-v \
@@ -18,3 +15,7 @@ bin/watchmon: *.go deps.txt
 deps.txt: go.mod go.sum
 	go get
 	go mod graph > deps.txt
+
+install: bin/watchmon
+	cp bin/watchmon $(GOPATH)/bin
+

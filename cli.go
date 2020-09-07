@@ -8,6 +8,8 @@ import (
 	"log"
 	"os"
 	"os/user"
+
+	"gopkg.in/yaml.v2"
 )
 
 func getUser() *user.User {
@@ -31,19 +33,10 @@ var (
 func ParseFlags() *Cli {
 	batteryDevice := flag.String(
 		"bat", "BAT0", "specify battery device from '/sys/class/power_supply/BAT*'")
-	sqliteFile := flag.String(
-		"sqlite", DBFileDefault, "saving data to sqlite")
-	dbCreateToggle := flag.Bool(
-		"dbcreate", false, "create the table?")
-	dumpRowsToggle := flag.Bool(
-		"dump", false, "dump the table?")
-	flag.Parse()
 
 	return &Cli{
-		BatteryDevice:  batteryDevice,
-		SqliteFile:     sqliteFile,
-		CreateDBToggle: dbCreateToggle,
-		DumpRowsToggle: dumpRowsToggle,
+		BatteryDevice: batteryDevice,
+		SqliteFile:    &DBFileDefault,
 	}
 
 }
@@ -53,7 +46,15 @@ type Cli struct {
 	SqliteFile     *string
 	CreateDBToggle *bool
 	DumpRowsToggle *bool
+	OutputFormat   *string
 	DB             *sql.DB
+	Last           *BatteryDataRow
+}
+
+func (c *Cli) String() string {
+	cfgBytes, err := yaml.Marshal(c)
+	checkErr(err)
+	return string(cfgBytes)
 }
 
 func (cli *Cli) Init() {
@@ -61,9 +62,9 @@ func (cli *Cli) Init() {
 	checkErr(err)
 	cli.DB = db
 
-	if *cli.CreateDBToggle {
-		CreateDatabaseAndTables(cli.DB)
-	}
+	//if *cli.CreateDBToggle {
+	//	CreateDatabaseAndTables(cli.DB)
+	//}
 }
 
 func (cli *Cli) DumpRows() {
@@ -71,11 +72,11 @@ func (cli *Cli) DumpRows() {
 	checkErr(err)
 
 	var id int
-	var charge_now int
-	var charge_full int
-	var charge_design int
-	var current_now int
-	var voltage_now int
+	var chargeNow int
+	var chargeFull int
+	var chargeDesign int
+	var currentNow int
+	var voltageNow int
 	var charging int
 	var timestamp int
 
@@ -83,11 +84,11 @@ func (cli *Cli) DumpRows() {
 	for rows.Next() {
 		err = rows.Scan(
 			&id,
-			&charge_now,
-			&charge_full,
-			&charge_design,
-			&current_now,
-			&voltage_now,
+			&chargeNow,
+			&chargeFull,
+			&chargeDesign,
+			&currentNow,
+			&voltageNow,
 			&charging,
 			&timestamp)
 
@@ -95,15 +96,28 @@ func (cli *Cli) DumpRows() {
 		fmt.Printf(
 			"%d|%d|%d|%d|%d|%d|%d|%d\n",
 			id,
-			charge_now,
-			charge_full,
-			charge_design,
-			current_now,
-			voltage_now,
+			chargeNow,
+			chargeFull,
+			chargeDesign,
+			currentNow,
+			voltageNow,
 			charging,
 			timestamp)
 	}
 
+}
+
+func (cli *Cli) FormatRow(bdw *BatteryDataRow) string {
+	switch *cli.OutputFormat {
+	case "plain":
+		return bdw.String()
+	case "yaml":
+		return bdw.Yaml()
+	case "json":
+		return bdw.Json()
+	default:
+		return bdw.String()
+	}
 }
 
 func (cli *Cli) Measure() {
@@ -119,12 +133,11 @@ func (cli *Cli) Measure() {
 		values(?,?,?,?,?,?,?)`,
 	)
 	checkErr(err)
-	var batInfo *BatteryDataRow
-	batInfo = Measure(cli.BatteryDevice)
 
-	fmt.Printf("%s: %+v", *cli.BatteryDevice, batInfo)
+	var batInfo *BatteryDataRow = CreateBatteryData(cli.BatteryDevice)
+	fmt.Fprintf(os.Stdout, "%+v", cli.FormatRow(batInfo))
 
-	_, errSql := stmt.Exec(
+	_, errSQL := stmt.Exec(
 		batInfo.ChargeNow,
 		batInfo.ChargeFull,
 		batInfo.ChargeFullDesign,
@@ -133,7 +146,7 @@ func (cli *Cli) Measure() {
 		batInfo.Charging,
 		batInfo.Timestamp,
 	)
-	checkErr(errSql)
+	checkErr(errSQL)
 }
 
 func usage() {
@@ -146,17 +159,40 @@ func usage() {
 }
 
 func main() {
-	cli := ParseFlags()
+	//cli := ParseFlags()
+	measureCmd := flag.NewFlagSet("measure", flag.ExitOnError)
+	batteryDevice := measureCmd.String(
+		"bat",
+		"BAT0",
+		"specify battery device from '/sys/class/power_supply/BAT*'",
+	)
+	outputFormat := measureCmd.String("output", "plain", "choose from plain,json,yaml")
+
+	dbCmd := flag.NewFlagSet("db", flag.ExitOnError)
+	completionCmd := flag.NewFlagSet("completion", flag.ExitOnError)
+
+	flag.Parse()
+
+	cli := &Cli{
+		BatteryDevice: batteryDevice,
+		SqliteFile:    &DBFileDefault,
+		OutputFormat:  outputFormat,
+	}
+
 	cli.Init()
 	defer cli.DB.Close()
 
 	if len(os.Args) >= 2 {
 		switch os.Args[1] {
 		case "measure":
+			measureCmd.Parse(os.Args[2:])
 			cli.Measure()
 		case "dump":
+			dbCmd.Parse(os.Args)
+			fmt.Println(dbCmd.Args())
 			cli.DumpRows()
 		case "completions":
+			completionCmd.Parse(os.Args)
 			data, err := base64.StdEncoding.DecodeString(shellCompletion)
 			if err != nil {
 				panic("error: the shell completions script could not be decoded")

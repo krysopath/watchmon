@@ -32,7 +32,7 @@ func ReadBatteryValueAsInt(path, battery, property string) int64 {
 	return asInt
 }
 
-func Measure(batteryDevice *string) *BatteryDataRow {
+func CreateBatteryData(batteryDevice *string) *BatteryDataRow {
 	var batteryPath string = "/sys/class/power_supply/%s/%s"
 	return &BatteryDataRow{
 		ChargeNow: ReadBatteryValueAsInt(
