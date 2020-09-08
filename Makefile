@@ -5,7 +5,7 @@ LD_FLAGS := '-s -w \
 	-X main.gitRef=$(GIT_SHA) \
 	-X main.shellCompletion=$(shell base64 -w0 watchmon-completion)'
 
-bin/watchmon: *.go deps.txt
+bin/watchmon: *.go deps.txt watchmon-completion
 	go build \
 		-v \
 		-o $@ \
