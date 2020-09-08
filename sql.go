@@ -45,11 +45,11 @@ func (bdw *BatteryDataRow) GetVoltageNow() float64 {
 	return float64(bdw.VoltageNow / 1000)
 }
 
-func (bdw *BatteryDataRow) GetCharging() string {
+func (bdw *BatteryDataRow) GetCharging() bool {
 	if bdw.Charging == 0 {
-		return "no"
+		return false
 	} else {
-		return "yes"
+		return true
 	}
 }
 
@@ -73,12 +73,42 @@ func (bdw *BatteryDataRow) GetCapacityDegradation() int64 {
 	return -1000.0*bdw.ChargeFull/bdw.ChargeFullDesign + 1000
 }
 
-func (bdw *BatteryDataRow) String() string {
+func (bdw *BatteryDataRow) Compute() *BatteryDataComputed {
+	return &BatteryDataComputed{
+		bdw.Id,
+		bdw.Timestamp,
+		bdw.GetCharging(),
+		bdw.GetPower(),
+		bdw.GetCurrentNow(),
+		bdw.GetVoltageNow(),
+		bdw.GetChargeNow(),
+		bdw.GetChargeFull(),
+		bdw.GetChargeFullDesign(),
+		bdw.GetCapacityPermille(),
+		bdw.GetCapacityDegradation(),
+	}
+}
+
+type BatteryDataComputed struct {
+	Id                  int64   `json:"id" yaml:"id"`
+	Timestamp           int64   `json:"timestamp" yaml:"timestamp"`
+	Charging            bool    `json:"charging" yaml:"charging"`
+	Power               float64 `json:"power_W" yaml:"power_W"`
+	CurrentNow          float64 `json:"current_now_mA" yaml:"current_now_mA"`
+	VoltageNow          float64 `json:"voltage_now_mV" yaml:"voltage_now_mV"`
+	ChargeNow           float64 `json:"charge_now_mAh" yaml:"charge_now_mAh"`
+	ChargeFull          float64 `json:"charge_full_mAh" yaml:"charge_full_mAh"`
+	ChargeFullDesign    float64 `json:"charge_full_design_mAh" yaml:"charge_full_design_mAh"`
+	CapacityPermille    int64   `json:"capacity_permille" yaml:"capacity_permille"`
+	CapacityDegradation int64   `json:"capacity_degration_permille" yaml:"capacity_degration_permille"`
+}
+
+func (bdc *BatteryDataComputed) String() string {
 	fString := `        Timestamp: %10d
+         Charging: %10t
             Power: %10.1f W
        CurrentNow: %10.1f mA
        VoltageNow: %10.1f mV
-         Charging: %10s
         ChargeNow: %10.1f mAh
        ChargeFull: %10.1f mAh
  ChargeFullDesign: %10.1f mAh
@@ -87,29 +117,29 @@ CapacityDegration: %10d ‰
 `
 	return fmt.Sprintf(
 		fString,
-		bdw.Timestamp,
-		bdw.GetPower(),
-		bdw.GetCurrentNow(),
-		bdw.GetVoltageNow(),
-		bdw.GetCharging(),
-		bdw.GetChargeNow(),
-		bdw.GetChargeFull(),
-		bdw.GetChargeFullDesign(),
-		bdw.GetCapacityPermille(),
-		bdw.GetCapacityDegradation(),
+		bdc.Timestamp,
+		bdc.Charging,
+		bdc.Power,
+		bdc.CurrentNow,
+		bdc.VoltageNow,
+		bdc.ChargeNow,
+		bdc.ChargeFull,
+		bdc.ChargeFullDesign,
+		bdc.CapacityPermille,
+		bdc.CapacityDegradation,
 	)
 }
 
-func (bdw *BatteryDataRow) Json() string {
-	cfgBytes, err := json.Marshal(bdw)
+func (bdc *BatteryDataComputed) Json() string {
+	asBytes, err := json.Marshal(bdc)
 	checkErr(err)
-	return string(cfgBytes)
+	return string(asBytes)
 }
 
-func (bdw *BatteryDataRow) Yaml() string {
-	cfgBytes, err := yaml.Marshal(bdw)
+func (bdc *BatteryDataComputed) Yaml() string {
+	asBytes, err := yaml.Marshal(bdc)
 	checkErr(err)
-	return string(cfgBytes)
+	return string(asBytes)
 }
 
 // CreateDatabaseAndTables or bust!

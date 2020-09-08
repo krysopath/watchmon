@@ -108,15 +108,16 @@ func (cli *Cli) DumpRows() {
 }
 
 func (cli *Cli) FormatRow(bdw *BatteryDataRow) string {
+	computed := bdw.Compute()
 	switch *cli.OutputFormat {
 	case "plain":
-		return bdw.String()
+		return computed.String()
 	case "yaml":
-		return bdw.Yaml()
+		return computed.Yaml()
 	case "json":
-		return bdw.Json()
+		return computed.Json()
 	default:
-		return bdw.String()
+		return computed.String()
 	}
 }
 
