@@ -10,33 +10,41 @@ _watchmon_completions()
     local cur prev OPTS
     _init_completion || return
 
+    subcmd="${COMP_WORDS[1]}"
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
+
 
     case $prev in
         '-bat')
             COMPREPLY=( $(compgen -W  "$(__get_battery_devices)" -- $cur) )
             return 0
             ;;
-        '-sqlite')
-            _filedir
+        '-output')
+            COMPREPLY=( $(compgen -W "plain yaml json" -- $cur) )
+            return 0
+            ;;
+    esac
+
+    case $subcmd in
+        'measure')
+            COMPREPLY=( $(compgen -W "-bat -output" -- $cur) )
+            return 0
+            ;;
+        'completions')
             return 0
             ;;
     esac
 
     case $cur in
         *)
-            OPTS="-bat
-            -dbcreate
-            -dump
-            -sqlite"
-
+            OPTS="measure completions init"
             COMPREPLY=( $(compgen -W "${OPTS[*]}" -- $cur) )
-            return  0
+            return 0
             ;;
     esac
 
     return 0
 }
 
-complete -o bashdefault -o nospace -F _watchmon_completions watchmon
+complete -o bashdefault -F _watchmon_completions watchmon
