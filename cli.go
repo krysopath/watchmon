@@ -79,8 +79,9 @@ func (cli *Cli) DumpRows() {
 	var voltageNow int
 	var charging int
 	var timestamp int
+	var cycle_count int
 
-	fmt.Println("id|charge_now|charge_full|charge_design|current_now|voltage_now|charging|timestamp")
+	fmt.Println("id|charge_now|charge_full|charge_design|current_now|voltage_now|charging|timestamp|cycle_count")
 	for rows.Next() {
 		err = rows.Scan(
 			&id,
@@ -90,11 +91,13 @@ func (cli *Cli) DumpRows() {
 			&currentNow,
 			&voltageNow,
 			&charging,
-			&timestamp)
+			&timestamp,
+			&cycle_count,
+		)
 
 		checkErr(err)
 		fmt.Printf(
-			"%d|%d|%d|%d|%d|%d|%d|%d\n",
+			"%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
 			id,
 			chargeNow,
 			chargeFull,
@@ -102,7 +105,9 @@ func (cli *Cli) DumpRows() {
 			currentNow,
 			voltageNow,
 			charging,
-			timestamp)
+			timestamp,
+			cycle_count,
+		)
 	}
 
 }
@@ -130,8 +135,9 @@ func (cli *Cli) Measure() string {
 			current_now, 
 			voltage_now, 
 			charging, 
-			timestamp) 
-		values(?,?,?,?,?,?,?)`,
+			timestamp,
+			cycle_count) 
+		values(?,?,?,?,?,?,?,?)`,
 	)
 	checkErr(err)
 
@@ -145,6 +151,7 @@ func (cli *Cli) Measure() string {
 		batInfo.VoltageNow,
 		batInfo.Charging,
 		batInfo.Timestamp,
+		batInfo.Cycles,
 	)
 	checkErr(errSQL)
 	return cli.FormatRow(batInfo)

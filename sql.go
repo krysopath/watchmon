@@ -19,7 +19,8 @@ const CreateTableStmt string = `
 	current_now INTEGER NULL,
 	voltage_now INTEGER NULL,
 	charging INTEGER NULL,
-	timestamp INTEGER NULL
+	timestamp INTEGER NULL,
+	cycles INTEGER NULL
     );`
 
 //BatteryDataRow holds a measurement
@@ -32,6 +33,7 @@ type BatteryDataRow struct {
 	VoltageNow       int64
 	Charging         int64
 	Timestamp        int64
+	Cycles           int64
 }
 
 func (bdw *BatteryDataRow) GetPower() float64 {
@@ -86,6 +88,7 @@ func (bdw *BatteryDataRow) Compute() *BatteryDataComputed {
 		bdw.GetChargeFullDesign(),
 		bdw.GetCapacityPermille(),
 		bdw.GetCapacityDegradation(),
+		bdw.Cycles,
 	}
 }
 
@@ -101,6 +104,7 @@ type BatteryDataComputed struct {
 	ChargeFullDesign    float64 `json:"charge_full_design_mAh" yaml:"charge_full_design_mAh"`
 	CapacityPermille    int64   `json:"capacity_permille" yaml:"capacity_permille"`
 	CapacityDegradation int64   `json:"capacity_degration_permille" yaml:"capacity_degration_permille"`
+	Cycles              int64   `json:"cycles" yaml:"cycles"`
 }
 
 func (bdc *BatteryDataComputed) String() string {
@@ -114,6 +118,7 @@ func (bdc *BatteryDataComputed) String() string {
  ChargeFullDesign: %10.1f mAh
  CapacityPermille: %10d ‰
 CapacityDegration: %10d ‰
+           Cycles: %10d ‰
 `
 	return fmt.Sprintf(
 		fString,
@@ -127,6 +132,7 @@ CapacityDegration: %10d ‰
 		bdc.ChargeFullDesign,
 		bdc.CapacityPermille,
 		bdc.CapacityDegradation,
+		bdc.Cycles,
 	)
 }
 

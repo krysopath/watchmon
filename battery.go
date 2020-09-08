@@ -48,5 +48,7 @@ func CreateBatteryData(batteryDevice *string) *BatteryDataRow {
 		Charging: IsBatteryCharging(
 			batteryPath, *batteryDevice, "status"),
 		Timestamp: time.Now().Unix(),
+		Cycles: ReadBatteryValueAsInt(
+			batteryPath, *batteryDevice, "cycle_count"),
 	}
 }
