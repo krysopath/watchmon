@@ -25,9 +25,9 @@ var (
 	DBFileDefault = fmt.Sprintf(
 		"%s/watchmon.sqlite",
 		User.HomeDir)
-	shellCompletion string
-	gitTag          string
-	gitRef          string
+	bashCompletion string
+	gitTag         string
+	gitRef         string
 )
 
 func ParseFlags() *Cli {
@@ -121,7 +121,7 @@ func (cli *Cli) FormatRow(bdw *BatteryDataRow) string {
 	}
 }
 
-func (cli *Cli) Measure() {
+func (cli *Cli) Measure() string {
 	stmt, err := cli.DB.Prepare(`
 		INSERT INTO batteryinfo(
 			charge_now, 
@@ -136,7 +136,6 @@ func (cli *Cli) Measure() {
 	checkErr(err)
 
 	var batInfo *BatteryDataRow = CreateBatteryData(cli.BatteryDevice)
-	fmt.Fprintf(os.Stdout, "%+v", cli.FormatRow(batInfo))
 
 	_, errSQL := stmt.Exec(
 		batInfo.ChargeNow,
@@ -148,6 +147,16 @@ func (cli *Cli) Measure() {
 		batInfo.Timestamp,
 	)
 	checkErr(errSQL)
+	return cli.FormatRow(batInfo)
+}
+
+func (cli *Cli) Completions() string {
+	data, err := base64.StdEncoding.DecodeString(bashCompletion)
+	if err != nil {
+		panic("error: the shell completions script could not be decoded")
+	}
+	return string(data)
+
 }
 
 func usage() {
@@ -160,7 +169,6 @@ func usage() {
 }
 
 func main() {
-	//cli := ParseFlags()
 	measureCmd := flag.NewFlagSet("measure", flag.ExitOnError)
 	batteryDevice := measureCmd.String(
 		"bat",
@@ -168,11 +176,8 @@ func main() {
 		"specify battery device from '/sys/class/power_supply/BAT*'",
 	)
 	outputFormat := measureCmd.String("output", "plain", "choose from plain,json,yaml")
-
 	dbCmd := flag.NewFlagSet("db", flag.ExitOnError)
 	completionCmd := flag.NewFlagSet("completion", flag.ExitOnError)
-
-	flag.Parse()
 
 	cli := &Cli{
 		BatteryDevice: batteryDevice,
@@ -187,18 +192,16 @@ func main() {
 		switch os.Args[1] {
 		case "measure":
 			measureCmd.Parse(os.Args[2:])
-			cli.Measure()
+			fmt.Fprintf(os.Stdout, "%+v", cli.Measure())
 		case "dump":
 			dbCmd.Parse(os.Args)
 			fmt.Println(dbCmd.Args())
 			cli.DumpRows()
 		case "completions":
 			completionCmd.Parse(os.Args)
-			data, err := base64.StdEncoding.DecodeString(shellCompletion)
-			if err != nil {
-				panic("error: the shell completions script could not be decoded")
-			}
-			fmt.Fprintf(os.Stdout, "%s\n", data)
+			fmt.Fprintf(os.Stdout,
+				"%s\n",
+				cli.Completions())
 		default:
 			usage()
 			os.Exit(1)

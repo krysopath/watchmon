@@ -3,7 +3,7 @@ GIT_TAG := $(shell git describe --abbrev=0 HEAD 2>/dev/null)
 LD_FLAGS := '-s -w \
 	-X main.gitTag=$(GIT_TAG) \
 	-X main.gitRef=$(GIT_SHA) \
-	-X main.shellCompletion=$(shell base64 -w0 watchmon-completion)'
+	-X main.bashCompletion=$(shell base64 -w0 watchmon-completion)'
 
 bin/watchmon: *.go deps.txt watchmon-completion
 	go build \
