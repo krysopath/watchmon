@@ -20,7 +20,7 @@ const CreateTableStmt string = `
 	voltage_now INTEGER NULL,
 	charging INTEGER NULL,
 	timestamp INTEGER NULL,
-	cycles INTEGER NULL
+	cycle_count INTEGER NULL
     );`
 
 //BatteryDataRow holds a measurement
@@ -37,14 +37,14 @@ type BatteryDataRow struct {
 }
 
 func (bdw *BatteryDataRow) GetPower() float64 {
-	return float64(bdw.VoltageNow / 1000000 * bdw.CurrentNow / 1000000)
+	return float64(bdw.VoltageNow) / 1000000.0 * float64(bdw.CurrentNow) / 1000000.0
 }
 
 func (bdw *BatteryDataRow) GetCurrentNow() float64 {
-	return float64(bdw.CurrentNow / 1000)
+	return float64(bdw.CurrentNow) / 1000.0
 }
 func (bdw *BatteryDataRow) GetVoltageNow() float64 {
-	return float64(bdw.VoltageNow / 1000)
+	return float64(bdw.VoltageNow) / 1000.0
 }
 
 func (bdw *BatteryDataRow) GetCharging() bool {
@@ -56,15 +56,15 @@ func (bdw *BatteryDataRow) GetCharging() bool {
 }
 
 func (bdw *BatteryDataRow) GetChargeNow() float64 {
-	return float64(bdw.ChargeNow / 1000)
+	return float64(bdw.ChargeNow) / 1000.0
 }
 
 func (bdw *BatteryDataRow) GetChargeFull() float64 {
-	return float64(bdw.ChargeFull / 1000)
+	return float64(bdw.ChargeFull) / 1000.0
 }
 
 func (bdw *BatteryDataRow) GetChargeFullDesign() float64 {
-	return float64(bdw.ChargeFullDesign / 1000)
+	return float64(bdw.ChargeFullDesign) / 1000.0
 }
 
 func (bdw *BatteryDataRow) GetCapacityPermille() int64 {
@@ -108,9 +108,20 @@ type BatteryDataComputed struct {
 }
 
 func (bdc *BatteryDataComputed) String() string {
+	switch *Cli.OutputFormat {
+	case "yaml":
+		return bdc.Yaml()
+	case "json":
+		return bdc.Json()
+	default:
+		return bdc.Plaintext()
+	}
+}
+
+func (bdc *BatteryDataComputed) Plaintext() string {
 	fString := `        Timestamp: %10d
          Charging: %10t
-            Power: %10.1f W
+            Power: %10.2f W
        CurrentNow: %10.1f mA
        VoltageNow: %10.1f mV
         ChargeNow: %10.1f mAh
@@ -118,7 +129,7 @@ func (bdc *BatteryDataComputed) String() string {
  ChargeFullDesign: %10.1f mAh
  CapacityPermille: %10d ‰
 CapacityDegration: %10d ‰
-           Cycles: %10d ‰
+           Cycles: %10d 
 `
 	return fmt.Sprintf(
 		fString,
